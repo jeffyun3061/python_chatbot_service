@@ -24,3 +24,4 @@ node_modules/
 
 # Ignore backend secrets
 back/.env
+
