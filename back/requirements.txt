@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+openai==1.*          # 1.x SDK (responses API 포함)
+motor                # MongoDB async
+sentence-transformers
+chromadb             # 로컬 벡터 DB

@@ -24948,128 +24948,190 @@ $parcel$ReactRefreshHelpers$b29b.prelude(module);
 try {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "default", ()=>App);
 var _jsxDevRuntime = require("react/jsx-dev-runtime");
 var _react = require("react");
 var _reactDefault = parcelHelpers.interopDefault(_react);
 var _appCss = require("./App.css");
 var _s = $RefreshSig$();
+const API_BASE = "http://localhost:8000";
 function App() {
     _s();
-    const [darkMode, setDarkMode] = (0, _react.useState)(true);
-    const [nickname, setNickname] = (0, _react.useState)(""); // 입력 중 닉네임
-    const [confirmedNickname, setConfirmedNickname] = (0, _react.useState)(localStorage.getItem("nickname") || "");
-    const [message, setMessage] = (0, _react.useState)("");
-    const [chatLog, setChatLog] = (0, _react.useState)([]);
+    const [dark, setDark] = (0, _react.useState)(true);
+    const [nick, setNick] = (0, _react.useState)("");
+    const [confirmed, setConfirmed] = (0, _react.useState)(()=>localStorage.getItem("nickname") || "");
+    const [input, setInput] = (0, _react.useState)("");
+    const [chat, setChat] = (0, _react.useState)([]);
+    const [ready, setReady] = (0, _react.useState)(false);
+    const [error, setError] = (0, _react.useState)(null);
     const ws = (0, _react.useRef)(null);
-    const endRef = (0, _react.useRef)(null);
-    // 채팅 기록 불러오기
+    const bottom = (0, _react.useRef)(null);
+    const reconnectDelay = (0, _react.useRef)(1000);
     (0, _react.useEffect)(()=>{
-        fetch("http://localhost:8000/messages").then((res)=>res.json()).then(setChatLog);
+        const controller = new AbortController();
+        (async ()=>{
+            try {
+                const res = await fetch(`${API_BASE}/messages`, {
+                    signal: controller.signal
+                });
+                if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+                const data = await res.json();
+                setChat(data);
+            } catch (e) {
+                console.error(e);
+                setError("\uC11C\uBC84\uC5D0 \uC5F0\uACB0\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");
+            }
+        })();
+        return ()=>controller.abort();
     }, []);
-    // WebSocket 연결
     (0, _react.useEffect)(()=>{
-        if (!confirmedNickname.trim()) return;
-        const socket = new WebSocket("ws://localhost:8000/ws");
-        ws.current = socket;
-        socket.onmessage = (e)=>{
-            const data = JSON.parse(e.data);
-            setChatLog((prev)=>[
-                    ...prev,
-                    data
-                ]);
+        if (!confirmed.trim()) return;
+        let socket;
+        let closedByUser = false;
+        const connect = ()=>{
+            socket = new WebSocket(`${API_BASE.replace(/^http/, "ws")}/ws`);
+            ws.current = socket;
+            socket.onopen = ()=>{
+                setReady(true);
+                reconnectDelay.current = 1000;
+            };
+            socket.onclose = ()=>{
+                setReady(false);
+                if (!closedByUser) {
+                    setTimeout(connect, reconnectDelay.current);
+                    reconnectDelay.current = Math.min(reconnectDelay.current * 2, 16000);
+                }
+            };
+            socket.onerror = (e)=>{
+                console.error(e);
+                socket.close();
+            };
+            socket.onmessage = (e)=>{
+                try {
+                    const msg = JSON.parse(e.data);
+                    setChat((prev)=>[
+                            ...prev,
+                            msg
+                        ]);
+                } catch (err) {
+                    console.error("Invalid JSON:", err);
+                }
+            };
         };
-        return ()=>socket.close();
+        connect();
+        return ()=>{
+            closedByUser = true;
+            socket && socket.close();
+        };
     }, [
-        confirmedNickname
+        confirmed
     ]);
-    // 자동 스크롤
     (0, _react.useEffect)(()=>{
-        endRef.current?.scrollIntoView({
+        bottom.current?.scrollIntoView({
             behavior: "smooth"
         });
     }, [
-        chatLog
+        chat
     ]);
-    const handleSend = ()=>{
-        if (!confirmedNickname.trim()) return alert("\uB2C9\uB124\uC784\uC744 \uBA3C\uC800 \uC785\uB825\uD558\uACE0 Enter\uB97C \uB204\uB974\uC138\uC694.");
-        if (!message.trim()) return;
-        const payload = {
-            type: "text",
-            nickname: confirmedNickname,
-            message,
+    const send = (0, _react.useCallback)(()=>{
+        if (!confirmed.trim()) return alert("\uB2C9\uB124\uC784 \uBA3C\uC800!");
+        if (!input.trim()) return;
+        if (!ready || !ws.current || ws.current.readyState !== WebSocket.OPEN) return alert("\uC11C\uBC84 \uC5F0\uACB0 \uC911\uC785\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD558\uC138\uC694.");
+        ws.current.send(JSON.stringify({
+            type: "chat",
+            nickname: confirmed,
+            message: input,
             timestamp: new Date().toISOString()
-        };
-        ws.current?.send(JSON.stringify(payload));
-        setMessage("");
-    };
-    const handleNicknameEnter = (e)=>{
-        if (e.key === "Enter" && nickname.trim()) {
-            localStorage.setItem("nickname", nickname);
-            setConfirmedNickname(nickname);
-        }
-    };
+        }));
+        setInput("");
+    }, [
+        confirmed,
+        input,
+        ready
+    ]);
+    const confirmNick = (0, _react.useCallback)(()=>{
+        if (!nick.trim()) return;
+        localStorage.setItem("nickname", nick);
+        setConfirmed(nick);
+    }, [
+        nick
+    ]);
     return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-        className: `container ${darkMode ? "dark" : "light"}`,
+        className: `container ${dark ? "dark" : "light"}`,
         children: [
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h2", {
                 children: "Chatting"
             }, void 0, false, {
                 fileName: "App.jsx",
-                lineNumber: 64,
+                lineNumber: 114,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
-                onClick: ()=>setDarkMode(!darkMode),
                 className: "mode-toggle",
-                children: darkMode ? "\u2600\uFE0F \uB77C\uC774\uD2B8\uBAA8\uB4DC" : "\uD83C\uDF19 \uB2E4\uD06C\uBAA8\uB4DC"
+                onClick: ()=>setDark(!dark),
+                children: dark ? "\u2600\uFE0F \uB77C\uC774\uD2B8\uBAA8\uB4DC" : "\uD83C\uDF19 \uB2E4\uD06C\uBAA8\uB4DC"
             }, void 0, false, {
                 fileName: "App.jsx",
-                lineNumber: 66,
+                lineNumber: 116,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
                 className: "nickname-bar",
                 children: [
                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("input", {
-                        placeholder: "\uB2C9\uB124\uC784 \uC785\uB825 \uD6C4 Enter \uB610\uB294 \uBC84\uD2BC \uD074\uB9AD",
-                        value: nickname,
-                        onChange: (e)=>setNickname(e.target.value),
-                        onKeyDown: handleNicknameEnter
+                        placeholder: "\uB2C9\uB124\uC784 \uC785\uB825",
+                        value: nick,
+                        onChange: (e)=>setNick(e.target.value),
+                        onKeyDown: (e)=>e.key === "Enter" && confirmNick()
                     }, void 0, false, {
                         fileName: "App.jsx",
-                        lineNumber: 71,
+                        lineNumber: 121,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
-                        onClick: ()=>{
-                            if (!nickname.trim()) return;
-                            localStorage.setItem("nickname", nickname);
-                            setConfirmedNickname(nickname);
-                        },
+                        onClick: confirmNick,
                         children: "Enter"
                     }, void 0, false, {
                         fileName: "App.jsx",
-                        lineNumber: 77,
+                        lineNumber: 127,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "App.jsx",
-                lineNumber: 70,
+                lineNumber: 120,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
                 className: "chat-box",
                 children: [
-                    chatLog.map((m, i)=>/*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                            className: `message ${m.nickname === confirmedNickname ? "mine" : "other"}`,
+                    error && /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                        className: "message error",
+                        children: error
+                    }, void 0, false, {
+                        fileName: "App.jsx",
+                        lineNumber: 131,
+                        columnNumber: 19
+                    }, this),
+                    chat.map((m, idx)=>{
+                        const mine = m.nickname === confirmed;
+                        const ai = m.nickname === "ChatGPT";
+                        return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                            className: `message ${mine ? "mine" : "other"} ${ai ? "ai" : ""}`,
                             children: [
+                                ai && /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("span", {
+                                    className: "ai-orb"
+                                }, void 0, false, {
+                                    fileName: "App.jsx",
+                                    lineNumber: 140,
+                                    columnNumber: 22
+                                }, this),
                                 /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("strong", {
                                     children: m.nickname
                                 }, void 0, false, {
                                     fileName: "App.jsx",
-                                    lineNumber: 94,
-                                    columnNumber: 13
+                                    lineNumber: 141,
+                                    columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("span", {
                                     children: [
@@ -25079,27 +25141,28 @@ function App() {
                                     ]
                                 }, void 0, true, {
                                     fileName: "App.jsx",
-                                    lineNumber: 95,
-                                    columnNumber: 13
+                                    lineNumber: 142,
+                                    columnNumber: 15
                                 }, this),
                                 m.message
                             ]
-                        }, i, true, {
+                        }, `${m.timestamp}-${idx}`, true, {
                             fileName: "App.jsx",
-                            lineNumber: 90,
-                            columnNumber: 11
-                        }, this)),
+                            lineNumber: 136,
+                            columnNumber: 13
+                        }, this);
+                    }),
                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                        ref: endRef
+                        ref: bottom
                     }, void 0, false, {
                         fileName: "App.jsx",
-                        lineNumber: 99,
+                        lineNumber: 147,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "App.jsx",
-                lineNumber: 88,
+                lineNumber: 130,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
@@ -25107,42 +25170,39 @@ function App() {
                 children: [
                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("input", {
                         placeholder: "\uBA54\uC2DC\uC9C0\uB97C \uC785\uB825\uD558\uC138\uC694",
-                        value: message,
-                        onChange: (e)=>setMessage(e.target.value),
-                        onKeyDown: (e)=>{
-                            if (!e.nativeEvent.isComposing && e.key === "Enter") handleSend();
-                        },
-                        disabled: !confirmedNickname
+                        value: input,
+                        onChange: (e)=>setInput(e.target.value),
+                        onKeyDown: (e)=>!e.nativeEvent.isComposing && e.key === "Enter" && send(),
+                        disabled: !confirmed
                     }, void 0, false, {
                         fileName: "App.jsx",
-                        lineNumber: 103,
+                        lineNumber: 151,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
-                        onClick: handleSend,
-                        disabled: !confirmedNickname,
+                        onClick: send,
+                        disabled: !confirmed,
                         children: "Send"
                     }, void 0, false, {
                         fileName: "App.jsx",
-                        lineNumber: 114,
+                        lineNumber: 158,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "App.jsx",
-                lineNumber: 102,
+                lineNumber: 150,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "App.jsx",
-        lineNumber: 63,
+        lineNumber: 113,
         columnNumber: 5
     }, this);
 }
-_s(App, "p9D4EqiLfEP9cH4zxr/VvJKT4lo=");
+_s(App, "IpGS2dBLgRx5aamA22Ha/+4BBM0=");
 _c = App;
-exports.default = App;
 var _c;
 $RefreshReg$(_c, "App");
 
