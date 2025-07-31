@@ -1,0 +1,138 @@
+body {
+  margin: 0;
+  font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+  border-radius: 12px;
+  max-width: 600px;
+  margin: 40px auto;
+  overflow: hidden;
+  box-shadow: 0 0 10px #0000004d;
+}
+
+.dark {
+  color: #f5f5f5;
+  background-color: #1e1e1e;
+}
+
+.light {
+  color: #1a1a1a;
+  background-color: #f0f0f0;
+}
+
+h2 {
+  text-align: center;
+  color: #ffeb3b;
+  background-color: #000;
+  margin: 0;
+  padding: 20px;
+  font-size: 24px;
+}
+
+.mode-toggle {
+  color: #fff;
+  cursor: pointer;
+  background-color: #444;
+  border: none;
+  border-radius: 20px;
+  margin: 10px auto;
+  padding: 8px 16px;
+  display: block;
+}
+
+.nickname-bar, .input-bar {
+  background-color: #1f1f1f;
+  gap: 10px;
+  padding: 15px;
+  display: flex;
+}
+
+.light .nickname-bar, .light .input-bar {
+  background-color: #e0e0e0;
+}
+
+.nickname-bar input, .input-bar input {
+  border: none;
+  border-radius: 20px;
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.dark .nickname-bar input, .dark .input-bar input {
+  color: #fff;
+  background-color: #333;
+}
+
+.light .nickname-bar input, .light .input-bar input {
+  color: #000;
+  background-color: #fff;
+}
+
+.nickname-bar button, .input-bar button {
+  color: #000;
+  cursor: pointer;
+  background-color: #ffeb3b;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-weight: bold;
+  transition: background-color .2s;
+}
+
+.input-bar button:hover {
+  background-color: #fdd835;
+}
+
+.chat-box {
+  flex-direction: column;
+  gap: 10px;
+  height: 420px;
+  padding: 20px;
+  display: flex;
+  overflow-y: auto;
+}
+
+.message {
+  word-break: break-word;
+  border-radius: 20px;
+  max-width: 70%;
+  padding: 10px 15px;
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
+}
+
+.message.mine {
+  color: #000;
+  background-color: #ffeb3b;
+  border-bottom-right-radius: 0;
+  align-self: flex-end;
+}
+
+.message.other {
+  color: #fff;
+  background-color: #3a3a3a;
+  border-bottom-left-radius: 0;
+  align-self: flex-start;
+}
+
+.light .message.mine {
+  color: #000;
+  background-color: #dcf8c6;
+}
+
+.light .message.other {
+  color: #000;
+  background-color: #eee;
+}
+
+.message strong {
+  color: #aaa;
+  margin-bottom: 5px;
+  font-size: 13px;
+  font-weight: bold;
+  display: block;
+}
+/*# sourceMappingURL=front.aa436662.css.map */
