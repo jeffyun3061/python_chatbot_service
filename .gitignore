@@ -1,0 +1,29 @@
+# Secrets — 절대 커밋 금지
+.env
+**/.env
+!.env.example
+!**/.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+
+# Node
+node_modules/
+.parcel-cache/
+dist/
+
+# Local DB / cache
+back/chroma/
+.idea/
+
+# OS / editor
+.DS_Store
+.vscode/
+
+# Archives
+*.zip
