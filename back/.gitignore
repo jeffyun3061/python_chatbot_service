@@ -1,6 +1,36 @@
+<<<<<<< HEAD
 # Secrets
 .env
 .env.local
 .env.*.local
 
 # Python
+=======
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Virtual Environment
+venv/
+.env
+.env.*
+
+# VSCode
+.vscode/
+
+# Mac/Linux
+.DS_Store
+
+# Node.js
+node_modules/
+
+# Streamlit/Cache
+.streamlit/
+
+# Ignore backend secrets
+back/.env
+
+>>>>>>> e3e9a29a53e42ea119cb98bc24f9c7c67932c4da
